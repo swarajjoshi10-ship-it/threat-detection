@@ -14,7 +14,8 @@ a model beat a simple rule at that?*
 > novelty gate detects an attacker's first contact with a user; most holdout attacks are repeat visits.
 > No detector is deployable. [SHAP evidence packs](#alert-explanations-shap) for the top alerts are done.
 > [LLM triage](#llm-triage-results) with a local 7B model fails all pre-registered criteria on days
-> 8–14 (0% fully faithful alerts, never dismisses); the holdout run is in progress.
+> 8–14 and on the holdout (0% fully faithful alerts across 1,100; it never dismisses, even when the
+> whole queue is false).
 
 ## Design choices that differ from the usual "classify the flows" project
 
@@ -626,7 +627,29 @@ What the model did:
 criterion. The deterministic faithfulness checker is the reusable part: it catches every failure
 mode found in the pilot automatically and without an LLM judge.
 
-**Days 15–29 (750 alerts):** run in progress; results are added here when it finishes.
+**Days 15–29 holdout (750 alerts, run once):** all 750 responses parsed. Evaluation file:
+[reports/triage/eval_evidence_lanl30_v2__qwen2.5-7b__v2.json](reports/triage/eval_evidence_lanl30_v2__qwen2.5-7b__v2.json).
+The queue contains none of the 47 malicious user-days, so every alert here is false and the
+correct action is dismiss.
+
+| Metric | Result |
+|---|---|
+| Alerts fully faithful | **0%** |
+| Claims with a correct value | **22.4%** (another 20.8% wrong only by decoration) |
+| Relations comparing an allowed pair | 24.7% |
+| Alerts with ungrounded numbers | 0.4% |
+| Share of the all-false queue dismissed | **0%** |
+| Share escalated | **49%** (368 of 750), median risk 75 |
+
+**Both windows together (1,100 alerts, 4,326 claims):**
+- 0% of alerts were fully faithful, against a target of at least 90%.
+- 21.6% of claim values were correct, against a target of at least 97%.
+- No alert was dismissed.
+
+The holdout confirms what days 8–14 showed: the model's verdicts don't depend on whether the alert
+is real. It escalates about half of any queue, true or false, so it adds no triage value. The
+faithfulness checker flagged every alert, so none of these unfaithful outputs would reach an analyst
+unmarked.
 
 ## Assumptions & limitations (so far)
 
@@ -663,7 +686,7 @@ reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations
    supervised ceiling; scikit-learn gradient boosting stands in for XGBoost to avoid a dependency) ·
    4. ~~Time split, PR-AUC, recall@k, alerts/day, bootstrap CIs~~; ~~event-level novelty (v2)~~; ~~two-stage gate~~; ~~frozen holdout days 15–29~~ (failed; see Holdout result); revisit detection; host-level entity,
    per-day/per-source breakdown, PR and alerts-vs-recall figures · 5. ~~SHAP for top
-   alerts~~ · 6. ~~LLM triage with faithfulness evaluation~~ (days 8–14 done, failed; holdout running) · 7. 2-page recommendations.
+   alerts~~ · 6. ~~LLM triage with faithfulness evaluation~~ (run on 1,100 alerts; failed all criteria) · 7. 2-page recommendations.
 
 ## AI assistance
 

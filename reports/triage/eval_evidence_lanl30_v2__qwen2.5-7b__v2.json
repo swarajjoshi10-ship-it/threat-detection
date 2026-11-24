@@ -1,0 +1,61 @@
+{
+  "packs": "reports/evidence_lanl30_v2.jsonl",
+  "backend": "ollama",
+  "model": "qwen2.5:7b",
+  "prompt_version": "v2",
+  "settings": {
+    "temperature": 0,
+    "seed": 42,
+    "num_ctx": 4096
+  },
+  "median_seconds_per_alert": 30.22,
+  "cost_usd_if_batch": 0.0,
+  "cost_usd_if_sync": 0.0,
+  "faithfulness": {
+    "alerts": 750,
+    "parsed": 750,
+    "status_counts": {
+      "ok": 750
+    },
+    "alerts_fully_faithful": 0.0,
+    "claims": 2947,
+    "claim_key_exists": 0.994231421784866,
+    "claim_value_ok": 0.22361723786901935,
+    "claim_value_wrong_but_cosmetic_only": 0.20800814387512725,
+    "relation_claims": 2801,
+    "relation_comparable": 0.247054623348804,
+    "relation_ok": 0.22991788646911818,
+    "risk_median": 75,
+    "verdicts": {
+      "escalate": 368,
+      "investigate": 382,
+      "dismiss": 0
+    },
+    "alerts_with_ungrounded_numbers": 0.004
+  },
+  "triage": {
+    "positives_in_window": 47,
+    "positives_in_queue": 0,
+    "recall_detector_order": {
+      "5": 0.0,
+      "10": 0.0,
+      "25": 0.0
+    },
+    "recall_after_triage": {
+      "5": 0.0,
+      "10": 0.0,
+      "25": 0.0
+    },
+    "verdicts_true_alerts": {
+      "escalate": 0,
+      "investigate": 0,
+      "dismiss": 0
+    },
+    "verdicts_false_alerts": {
+      "escalate": 368,
+      "investigate": 382,
+      "dismiss": 0
+    },
+    "share_dismissed": 0.0
+  }
+}

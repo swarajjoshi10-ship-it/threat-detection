@@ -11,5 +11,3 @@ reports/figures/
 .ipynb_checkpoints/
 data/*.log
 data/*.duckdb.tmp
-# holdout triage cache is still being written; added once the run finishes
-reports/triage/evidence_lanl30_v2__*.jsonl
