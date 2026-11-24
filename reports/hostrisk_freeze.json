@@ -1,0 +1,9 @@
+{
+  "frozen_unix": 1795516594,
+  "note": "v3 method before any v3 scoring",
+  "files": {
+    "hostrisk/__init__.py": "a4467f4dbaf7b882f31528ce0a5406f207c1f863dfb004ec4a085c18a7a05880",
+    "hostrisk/features.py": "6f4c2205303809f085114e934722fa64d9d60035a34e3f8398a94b445b69e3ae",
+    "hostrisk/run.py": "fdc0e23cb356275dac4e6006017b7610915d5b95c8ffe1f6e573ffb32b3c498f"
+  }
+}

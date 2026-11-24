@@ -1,0 +1,25 @@
+{
+  "packs": "reports/evidence_lanl_v2.jsonl",
+  "model": "qwen2.5:7b",
+  "prompt_version": "n2",
+  "settings": {
+    "temperature": 0,
+    "seed": 42,
+    "num_ctx": 4096,
+    "num_predict": 1024
+  },
+  "faithfulness": {
+    "alerts": 350,
+    "status_counts": {
+      "ok": 350
+    },
+    "alerts_fully_faithful": 0.2714285714285714,
+    "claims": 1179,
+    "claim_key_exists": 1.0,
+    "claim_reference_ok": 0.7828668363019508,
+    "claim_direction_ok": 0.7718405428329093,
+    "alerts_with_ungrounded_numbers": 0.16857142857142857,
+    "alerts_with_2_to_6_claims": 1.0,
+    "median_seconds_per_alert": 19.51
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "window": "posthoc",
+    "days": "15-29",
+    "W": 14,
+    "test_rows": 114393,
+    "positives_total": 47,
+    "positives_scored": 47,
+    "positives_with_remote_from_fanout_host": 47,
+    "post_hoc": true
+  },
+  "results": {
+    "rules": {
+      "pr_auc": 0.0014174113915943062,
+      "alerts_per_day@50": 945.4550724637681,
+      "alerts_per_day@80": 4100.748148148148,
+      "alerts_per_day@90": 5863.507407407407,
+      "recall@5/day": 0.0,
+      "recall@10/day": 0.002007226013649137,
+      "recall@25/day": 0.01291205717632658,
+      "recall@50/day": 0.031668103533375895,
+      "pr_auc_ci90": [
+        0.0006901547928480707,
+        0.0025336600121368814
+      ],
+      "alerts_per_day@80_ci90": [
+        1906.7142424242425,
+        5071.388000000001
+      ],
+      "accounts_caught@50/day": 0.0,
+      "accounts_caught_n": 0,
+      "accounts_total": 37,
+      "median_days_to_first_catch": null
+    },
+    "iforest": {
+      "pr_auc": 0.0025400314287417317,
+      "alerts_per_day@50": 677.4,
+      "alerts_per_day@80": 2083.0666666666666,
+      "alerts_per_day@90": 3817.733333333333,
+      "recall@5/day": 0.0,
+      "recall@10/day": 0.0,
+      "recall@25/day": 0.06382978723404255,
+      "recall@50/day": 0.06382978723404255,
+      "pr_auc_ci90": [
+        0.0007717509236459339,
+        0.007983886572201027
+      ],
+      "alerts_per_day@80_ci90": [
+        1502.6833333333334,
+        3113.813333333333
+      ],
+      "accounts_caught@50/day": 0.02702702702702703,
+      "accounts_caught_n": 1,
+      "accounts_total": 37,
+      "median_days_to_first_catch": 0.0
+    },
+    "two_stage": {
+      "pr_auc": 0.0021461629136824653,
+      "alerts_per_day@50": 667.9333333333333,
+      "alerts_per_day@80": 2192.0,
+      "alerts_per_day@90": 3838.2,
+      "recall@5/day": 0.0,
+      "recall@10/day": 0.0,
+      "recall@25/day": 0.0,
+      "recall@50/day": 0.0,
+      "pr_auc_ci90": [
+        0.0010113335617715354,
+        0.0039015029667718807
+      ],
+      "alerts_per_day@80_ci90": [
+        916.7466666666667,
+        3155.71
+      ],
+      "accounts_caught@50/day": 0.0,
+      "accounts_caught_n": 0,
+      "accounts_total": 37,
+      "median_days_to_first_catch": null
+    },
+    "iforest_v3": {
+      "pr_auc": 0.004273663900302144,
+      "alerts_per_day@50": 509.8,
+      "alerts_per_day@80": 1563.4,
+      "alerts_per_day@90": 2376.2,
+      "recall@5/day": 0.0,
+      "recall@10/day": 0.02127659574468085,
+      "recall@25/day": 0.06382978723404255,
+      "recall@50/day": 0.10638297872340426,
+      "pr_auc_ci90": [
+        0.0014714856337782669,
+        0.013174154930778552
+      ],
+      "alerts_per_day@80_ci90": [
+        1276.82,
+        2346.9333333333334
+      ],
+      "accounts_caught@50/day": 0.08108108108108109,
+      "accounts_caught_n": 3,
+      "accounts_total": 37,
+      "median_days_to_first_catch": 0.0
+    },
+    "host_fanout": {
+      "pr_auc": 0.011672938650963019,
+      "alerts_per_day@50": 381.93333333333334,
+      "alerts_per_day@80": 3230.266666666667,
+      "alerts_per_day@90": 3383.2,
+      "recall@5/day": 0.0,
+      "recall@10/day": 0.0,
+      "recall@25/day": 0.0,
+      "recall@50/day": 0.0851063829787234,
+      "pr_auc_ci90": [
+        0.005548272838606398,
+        0.022846295719576453
+      ],
+      "alerts_per_day@80_ci90": [
+        3116.7533333333336,
+        3287.6233333333334
+      ],
+      "accounts_caught@50/day": 0.10810810810810811,
+      "accounts_caught_n": 4,
+      "accounts_total": 37,
+      "median_days_to_first_catch": 0.0
+    }
+  },
+  "host_view": {
+    "positive_host_days": 12,
+    "distinct_attacker_hosts": 2,
+    "host_recall@1/day": 0.0,
+    "host_recall@5/day": 0.0,
+    "host_recall@10/day": 0.0
+  }
+}

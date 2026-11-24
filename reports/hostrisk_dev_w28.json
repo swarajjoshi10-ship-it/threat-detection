@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "window": "dev",
+    "days": "8-14",
+    "W": 28,
+    "test_rows": 55228,
+    "positives_total": 116,
+    "positives_scored": 116,
+    "positives_with_remote_from_fanout_host": 116,
+    "post_hoc": false
+  },
+  "results": {
+    "rules": {
+      "pr_auc": 0.053050132545882034,
+      "alerts_per_day@50": 137.1875,
+      "alerts_per_day@80": 959.6349206349206,
+      "alerts_per_day@90": 2000.4945054945056,
+      "recall@5/day": 0.005305039787798409,
+      "recall@10/day": 0.012950538305507879,
+      "recall@25/day": 0.06249981378620178,
+      "recall@50/day": 0.16254776996064504,
+      "pr_auc_ci90": [
+        0.036512083739449995,
+        0.06920248591872526
+      ],
+      "alerts_per_day@80_ci90": [
+        722.5946428571428,
+        1197.042176180817
+      ],
+      "accounts_caught@50/day": 0.18604651162790697,
+      "accounts_caught_n": 16,
+      "accounts_total": 86,
+      "median_days_to_first_catch": 0.0
+    },
+    "iforest": {
+      "pr_auc": 0.05653041427201984,
+      "alerts_per_day@50": 287.7142857142857,
+      "alerts_per_day@80": 1441.0,
+      "alerts_per_day@90": 2617.5714285714284,
+      "recall@5/day": 0.05172413793103448,
+      "recall@10/day": 0.06896551724137931,
+      "recall@25/day": 0.13793103448275862,
+      "recall@50/day": 0.1896551724137931,
+      "pr_auc_ci90": [
+        0.03268901894931731,
+        0.10052839145468125
+      ],
+      "alerts_per_day@80_ci90": [
+        1103.4428571428573,
+        1806.3785714285716
+      ],
+      "accounts_caught@50/day": 0.19767441860465115,
+      "accounts_caught_n": 17,
+      "accounts_total": 86,
+      "median_days_to_first_catch": 0.0
+    },
+    "two_stage": {
+      "pr_auc": 0.09496835214792328,
+      "alerts_per_day@50": 138.28571428571428,
+      "alerts_per_day@80": 614.1428571428571,
+      "alerts_per_day@90": 1513.5714285714287,
+      "recall@5/day": 0.04310344827586207,
+      "recall@10/day": 0.07758620689655173,
+      "recall@25/day": 0.14655172413793102,
+      "recall@50/day": 0.25,
+      "pr_auc_ci90": [
+        0.05989996809184494,
+        0.14036987310211266
+      ],
+      "alerts_per_day@80_ci90": [
+        438.2285714285714,
+        764.5785714285715
+      ],
+      "accounts_caught@50/day": 0.3023255813953488,
+      "accounts_caught_n": 26,
+      "accounts_total": 86,
+      "median_days_to_first_catch": 0.0
+    },
+    "iforest_v3": {
+      "pr_auc": 0.1044763825330683,
+      "alerts_per_day@50": 105.28571428571429,
+      "alerts_per_day@80": 410.14285714285717,
+      "alerts_per_day@90": 613.7142857142857,
+      "recall@5/day": 0.05172413793103448,
+      "recall@10/day": 0.08620689655172414,
+      "recall@25/day": 0.19827586206896552,
+      "recall@50/day": 0.3017241379310345,
+      "pr_auc_ci90": [
+        0.07081035458797177,
+        0.1656904181153112
+      ],
+      "alerts_per_day@80_ci90": [
+        373.39285714285717,
+        530.6357142857142
+      ],
+      "accounts_caught@50/day": 0.32558139534883723,
+      "accounts_caught_n": 28,
+      "accounts_total": 86,
+      "median_days_to_first_catch": 0.0
+    },
+    "host_fanout": {
+      "pr_auc": 0.6174502278744154,
+      "alerts_per_day@50": 13.0,
+      "alerts_per_day@80": 21.571428571428573,
+      "alerts_per_day@90": 24.571428571428573,
+      "recall@5/day": 0.09482758620689655,
+      "recall@10/day": 0.21551724137931033,
+      "recall@25/day": 0.5344827586206896,
+      "recall@50/day": 0.8275862068965517,
+      "pr_auc_ci90": [
+        0.5479416171403659,
+        0.7142233649732742
+      ],
+      "alerts_per_day@80_ci90": [
+        18.285714285714285,
+        25.150000000000002
+      ],
+      "accounts_caught@50/day": 0.8372093023255814,
+      "accounts_caught_n": 72,
+      "accounts_total": 86,
+      "median_days_to_first_catch": 0.0
+    }
+  },
+  "host_view": {
+    "positive_host_days": 9,
+    "distinct_attacker_hosts": 3,
+    "host_recall@1/day": 0.3333333333333333,
+    "host_recall@5/day": 0.4444444444444444,
+    "host_recall@10/day": 0.5206349206349206
+  }
+}

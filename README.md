@@ -16,6 +16,13 @@ a model beat a simple rule at that?*
 > [LLM triage](#llm-triage-results) with a local 7B model fails all pre-registered criteria on days
 > 8–14 and on the holdout (0% fully faithful alerts across 1,100; it never dismisses, even when the
 > whole queue is false).
+> **v3 (post-hoc, after the holdout diagnosis):** host fan-out scoring catches 82.8% at 50/day on days
+> 8–14 but only 8.5% on days 15–29 with its pre-registered 14-day window; with a 28-day window it
+> catches 89.4% (11 alerts/day at 80% recall). That is a sensitivity result dominated by one attacker
+> host, not a validated detector ([v3 results](#v3-results)).
+> **Triage v3** (LLM narrates, code fills values, detector decides) fails its 90% bar: 27.1% of 350
+> alerts fully faithful, with no invented keys but a wrong reference pair in 203 of the 255 failures
+> ([triage v3 results](#triage-v3-results-fails-the-criterion-271-fully-faithful-target-90)).
 
 ## Design choices that differ from the usual "classify the flows" project
 
@@ -651,6 +658,190 @@ is real. It escalates about half of any queue, true or false, so it adds no tria
 faithfulness checker flagged every alert, so none of these unfaithful outputs would reach an analyst
 unmarked.
 
+## v3: host-level and recency signals (post-hoc): pre-registration
+
+Written on 2026-11-24, **before any v3 feature was computed**.
+
+**Status of the evidence: post-hoc, not a holdout.** The design comes from the
+[holdout diagnosis](#holdout-result-lanl-days-1529), which read the days 15–29 labels: repeat
+victims, and one attacker host. Days 15–29 can therefore only show whether v3 fixes the diagnosed
+failure, not that it generalises. No labelled LANL days remain (all 749 red-team events fall in days
+0–29), so a true holdout would need another dataset.
+
+Code: [hostrisk/](hostrisk/), a new package outside the frozen tree. `freeze verify` on the v2
+method keeps passing.
+
+**Definitions.**
+- A user–host pair is *new* on its first day, unless that day is also the user's own first day
+  (the existing cold-start rule).
+- It is *recently new* on day d if that first day falls in [d−13, d], so the window W is 14 days.
+- *Remote* means a Network logon to another host, as in v2.
+
+**New user-day features.**
+1. `n_recent_new_src_remote`: today's remote logons from source hosts that this user first used
+   within the last W days. This targets **repeat visits**: v2 only counted the first day.
+2. `src_fanout_max`: the largest *fan-out* among today's remote-logon source hosts.
+   - Fan-out of host h on day d = (users for whom h is recently new) / (1 + established users of h).
+   - Established users are pairs first seen before the window, or at the user's cold start.
+   - This targets **one host touching many accounts**: a workstation with one regular user that
+     suddenly serves 30 scores about 15, while a terminal server with 500 regular users gaining 30
+     scores about 0.06.
+3. `src_recent_new_users_max`: the raw count of recently-new users behind that maximum.
+
+The rarity weighting suggested earlier is **dropped**. A host used by an attacker becomes *more*
+popular, so a rarity weight would down-weight exactly the signal in item 2.
+
+**Detectors.** All are fitted on days 0–7, as before, and none sees labels.
+- `host_fanout` (**primary**): ranks by `src_fanout_max`, with ties broken by the v2 Isolation
+  Forest score.
+- `iforest_v3` (secondary): the Isolation Forest on the v2 design matrix plus log1p of the three new
+  features.
+- References, recomputed in the same run: v2 `rules`, `iforest` and `two_stage`.
+
+**Evaluation.** The same metrics as v2, plus two per-account metrics:
+- *accounts caught*: the share of malicious accounts with at least one user-day in the top 50/day;
+- *days to first catch*: the median, per caught account, from its first malicious day.
+
+**Criteria for the primary detector, fixed now.**
+
+| Window | Criterion | v2 reference |
+|---|---|---|
+| Days 8–14 (validation) | recall at 50/day ≥ 25%, i.e. no worse than v2 | two_stage 25.0% |
+| Days 15–29 (post-hoc) | recall at 50/day ≥ 20% (at least 10 of 47) | two_stage 0%, iforest 6.4%, supervised 31.9% |
+
+**Reported but not judged:**
+- W = 7 and W = 28 (sensitivity);
+- a host-level view: rank source hosts by fan-out each day; a host-day counts as positive if any
+  red-team event came from it that day. This view is dominated by one attacker host (C17693), so it
+  is reported, not claimed.
+
+Everything is run once per window, and the results are reported here whichever way they fall.
+
+### v3 results
+
+The v3 code was hashed before scoring ([reports/hostrisk_freeze.json](reports/hostrisk_freeze.json)).
+Full tables are in `reports/hostrisk_{dev,posthoc}_w{7,14,28}.md`. In the same run, the v2 references
+reproduce their earlier numbers exactly: two_stage 614 / 2,192 alerts/day, and iforest 1,441 / 2,083.
+
+| Detector | Recall @50/day, 8–14 | Recall @50/day, **15–29 (post-hoc)** | Alerts/day @80%, 15–29 | Accounts caught @50/day, 15–29 |
+|---|---|---|---|---|
+| v2 two_stage | 25.0% | 0.0% | 2,192 | 0% |
+| v2 iforest | 19.0% | 6.4% | 2,083 | 3% |
+| iforest_v3 (secondary) | 30.2% | 10.6% | 1,563 | 8% |
+| **host_fanout, W = 14 (primary)** | **82.8%** | **8.5%** (4 of 47) | 3,230 | 11% |
+| host_fanout, W = 7 (sensitivity) | 30.2% | 2.1% | 2,507 | 3% |
+| host_fanout, W = 28 (sensitivity) | 82.8% | **89.4%** (42 of 47) | **11** | **100%** |
+
+**Against the pre-registered criteria, the primary detector passes on days 8–14 and fails on days
+15–29.**
+- **Days 8–14:** 82.8% recall at 50/day (target ≥ 25%), PR-AUC 0.617, and 22 alerts/day at 80% recall.
+- **Days 15–29:** 8.5% (target ≥ 20%).
+
+**Why W = 14 fails and W = 28 works** (post-hoc; labels used to explain, not to choose):
+- Attacker host C17693 accounts for 41 of the 47 holdout positives. By days 8–14 it had reached 131
+  users, and its fan-out was the highest of any host on 3 of those days.
+- With W = 14, those users count as "established" two weeks after first contact. So C17693's fan-out
+  falls from 16.4 on day 14 to 8.9, 5.7 and then 0.26–0.02 on days 26–29. By then 2,700–3,400 hosts
+  rank above it.
+- **The attacker's own persistence becomes the baseline.** This is baseline poisoning, the same
+  failure as v2, in a different feature.
+- W = 28 covers the whole campaign, so the host stays anomalous.
+
+**How far W = 28 can be trusted:**
+- **Not pre-registered as primary.** Picking it now would be choosing the winning variant after
+  seeing the results. It is reported as a sensitivity result only.
+- **On a 30-day dataset, W = 28 means "everything since day 1 is recent".** Over a longer period,
+  benign hosts that slowly gain users would build up fan-out as well. The cost in false alerts is
+  unmeasured, because LANL has no labelled days after 29.
+- **Mostly one attacker host.** The result says "C17693's fan-out stays visible", not "catches
+  attackers in general".
+
+**What the result points to as a design:** don't let a flagged host's history decay into the
+baseline. Keep *alert memory*: a host that once showed extreme fan-out stays on a watch list until
+an analyst clears it, which is how a SOC works anyway. This would be a new method, and it needs
+new labelled data to test honestly.
+
+## Triage v3 (LLM narrates, code fills values): pre-registration
+
+Written on 2026-11-24, **before any v3 triage call**. Code: [triage/narrate.py](triage/narrate.py),
+tests in [tests/test_narrate.py](tests/test_narrate.py). The v2 module is unchanged, so its results
+stay reproducible.
+
+**What the v2 run taught, and the design change:**
+- The 7B model couldn't copy values (21.6% correct) or pick verdicts (it never dismissed).
+- In v3 it does neither. It chooses **which fact keys matter**, optionally names an allowed reference
+  key, and writes the summary, a benign reading and next steps.
+- **Code** renders every value and computes every above/below/similar relation from the facts.
+- The **verdict stays with the detector**, as the alert's place in the queue. No verdict or risk is
+  asked of the model.
+
+**Check, mechanical as before.** An alert is fully faithful when:
+- every cited key exists;
+- every named reference is an allowed pair;
+- it has 2–6 claims;
+- its free text contains **no digits at all**, since the prompt forbids numbers in prose.
+
+**Model and settings:** the same `qwen2.5:7b` with greedy decoding and a 4,096-token context.
+Prompt version `n1`.
+
+**Workflow:** a 20-alert pilot on days 1–7, for format bugs only, with one allowed revision. Then
+one run on the 350 days 8–14 alerts.
+
+**Criterion, fixed now:** at least 90% of the 350 alerts fully faithful. The share of alerts with
+digits in the text and with bad keys or references is reported either way. There's no usefulness
+claim, because judging that needs analysts.
+
+**n1 pilot result and the one allowed revision (n2), recorded before n2 ran.** The n1 pilot (20
+alerts, 20 s per alert) parsed 20 of 20, but **0 of 20 were fully faithful**:
+- **digits:** 75% of alerts wrote digits in the text despite the rule. The numbers were mostly
+  correct copies, for example "304 remote logon events".
+- **bad keys:** 5.7% of cited keys don't exist, for example `obs.new_dst_ratio = 1.0` or `n_ntlm`.
+- **bad references:** 16% name a disallowed reference, for example `log1p_n_new_dst_remote`.
+- **contradictory prose,** which n1 didn't check: "far above the user's usual failure rate" for 0.94
+  against a usual 0.98.
+
+**n2 changes (the system prompt changed; the schema is now built per alert):**
+- **Keys are enforced in decoding.** Claim keys must come from this alert's own facts (a JSON-schema
+  enum), and references must come from the allowed set. I checked that Ollama enforces the enum.
+- **A no-digit pattern was tried and dropped.** Ollama accepted it, but generation then never
+  finished.
+- **The no-digit rule is dropped** in favour of v2's rule: every number in the text must appear in
+  the facts. n1's rule was stricter than faithfulness needs, and v2 showed the model rarely invents
+  numbers in prose (0.9% of alerts).
+- **The checker gains a stricter test:** a claim's direction words ("above", "lower", "similar")
+  must agree with the relation code computes.
+- Generation is capped at 1,024 tokens.
+
+**n2 is final whatever its pilot shows;** the 350-alert run uses it unchanged.
+
+### Triage v3 results: fails the criterion (27.1% fully faithful, target 90%)
+
+| | n1 pilot (20) | n2 pilot (20) | **n2, days 8–14 (350)** |
+|---|---|---|---|
+| Parsed | 100% | 100% | 100% |
+| **Alerts fully faithful** | 0% | 55% | **27.1%** ✗ |
+| Cited keys that exist | 94.3% | 100% | 100% |
+| References that are an allowed pair | 84.3% | 93.0% | 78.3% |
+| Direction words that agree with the computed relation | not checked | 90.1% | 77.2% |
+| Alerts with a number not in the facts | (any digit) 75% | 5% | 16.9% |
+| Median seconds per alert | 19.9 | 19.4 | 19.5 |
+
+- **Keys are fixed by the schema enum:** no invented field names in 1,179 claims.
+- **Pairing is not:** the reference enum lists every comparable key, so the model can still pair a
+  key with the wrong reference (for example `obs.n_new_src_ntlm` against `obs.n_ntlm`). Of the 255
+  unfaithful alerts, 203 have a bad pair; a direction word on a bad pair then fails too (222).
+- **Ungrounded numbers are real errors:** computed percentages ("98.5%"), invented baselines ("their
+  own historical average of 50%"), and clock times.
+- **The pilot overstated it:** 55% on days 1–7 against 27.1% on days 8–14. The pilot alerts are
+  simpler, which is a reason a 20-alert pilot is for format bugs only.
+- **What would fix pairing:** let the model choose only a key, and have code attach the one allowed
+  reference (`obs.X` → `obs.X_base_mean`). That is a third revision, so it would need a new
+  pre-registration and fresh alerts; it is not done here.
+
+What does hold: code-filled values are correct by construction, and the verdict never comes from the
+model. The LLM's prose is still not trustworthy without the mechanical check, which is what the check
+is for. Reports: `reports/triage/eval_evidence_lanl_v2__qwen2.5-7b__n2.json` and the pilot's.
+
 ## Assumptions & limitations (so far)
 
 * **Timezone:** LANL publishes no timezone; hours are on the dataset clock. `off_hours` was chosen from the
@@ -674,8 +865,9 @@ unmarked.
 config/       default.toml (single source of parameters)
 sql/          ingestion + feature SQL (DuckDB)
 src/threatdet/  config, sqlrun, pipeline, metrics, evaluate, freeze, models/detectors, data/{download_lanl, synthetic}
-triage/       explain (SHAP evidence packs), llm (triage + faithfulness check); outside the frozen tree on purpose
-tests/        pytest suite (95 tests, offline, ~1 min)
+triage/       explain (SHAP evidence packs), llm (v2 triage + faithfulness check), narrate (v3: LLM narrates, code fills values); outside the frozen tree
+hostrisk/     v3 host fan-out + recency features and evaluation (post-hoc); outside the frozen tree
+tests/        pytest suite (104 tests, offline, ~1 min)
 notebooks/    exploration (to come)
 reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations_*.{json,md}; figures + recommendations write-up (to come)
 ```
@@ -684,7 +876,7 @@ reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations
 
 1. ~~Ingest~~ · 2. ~~Features~~ · 3. ~~Models~~ (rules, z-score max, Isolation Forest, autoencoder,
    supervised ceiling; scikit-learn gradient boosting stands in for XGBoost to avoid a dependency) ·
-   4. ~~Time split, PR-AUC, recall@k, alerts/day, bootstrap CIs~~; ~~event-level novelty (v2)~~; ~~two-stage gate~~; ~~frozen holdout days 15–29~~ (failed; see Holdout result); revisit detection; host-level entity,
+   4. ~~Time split, PR-AUC, recall@k, alerts/day, bootstrap CIs~~; ~~event-level novelty (v2)~~; ~~two-stage gate~~; ~~frozen holdout days 15–29~~ (failed; see Holdout result); ~~revisit detection + host-level fan-out (v3, post-hoc)~~; alert memory for flagged hosts (needs new labelled data);
    per-day/per-source breakdown, PR and alerts-vs-recall figures · 5. ~~SHAP for top
    alerts~~ · 6. ~~LLM triage with faithfulness evaluation~~ (run on 1,100 alerts; failed all criteria) · 7. 2-page recommendations.
 
