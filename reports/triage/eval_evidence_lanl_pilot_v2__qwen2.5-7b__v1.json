@@ -1,0 +1,28 @@
+{
+  "packs": "reports/evidence_lanl_pilot_v2.jsonl",
+  "backend": "ollama",
+  "model": "qwen2.5:7b",
+  "prompt_version": "v1",
+  "settings": {
+    "temperature": 0,
+    "seed": 42,
+    "num_ctx": 8192
+  },
+  "median_seconds_per_alert": 37.96,
+  "cost_usd_if_batch": 0.0,
+  "cost_usd_if_sync": 0.0,
+  "faithfulness": {
+    "alerts": 20,
+    "parsed": 20,
+    "status_counts": {
+      "ok": 20
+    },
+    "alerts_fully_faithful": 0.0,
+    "claims": 79,
+    "claim_key_exists": 1.0,
+    "claim_value_ok": 0.3670886075949367,
+    "relation_claims": 60,
+    "relation_ok": 0.35,
+    "alerts_with_ungrounded_numbers": 0.0
+  }
+}

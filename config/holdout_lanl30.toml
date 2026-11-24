@@ -1,0 +1,92 @@
+# FROZEN HOLDOUT CONFIG. Identical to default.toml except the lines marked "holdout:".
+# Method fitted on days 0-7 exactly as before; scored ONCE on days 15-29, which no design step has seen.
+
+# Single source of truth for pipeline parameters. Every script takes --config.
+seed = 42
+
+[paths]
+# Relative paths resolve against the repo root.
+raw_dir = "data/raw"
+db_path = "data/lanl30.duckdb"   # holdout:
+
+[data]
+# "synthetic" -> data/raw/synthetic/{auth,redteam}.txt.gz
+# "lanl"      -> data/raw/lanl/{auth,redteam}.txt.gz (see README, "Getting the data")
+source = "lanl30"   # holdout: data/raw/lanl30, days 0-29
+# Only events with day < max_days are ingested (day 0 = first 86400 s of the LANL clock).
+max_days = 30   # holdout:
+
+[synthetic]
+n_users = 300
+n_departments = 8
+n_servers_per_department = 3
+n_days = 14
+# Days on which a compromised account performs lateral movement (labelled in redteam file).
+attack_days = [8, 9, 10, 11, 12, 13]
+n_compromised_users = 8
+# Benign-but-unusual behaviour that should cost a naive detector false positives.
+n_admin_users = 5
+p_admin_sweep_per_day = 0.25
+p_travel_per_user_day = 0.01
+
+[features]
+# Entity = source user. Machine accounts (ending in "$") and ANONYMOUS LOGON are excluded by default:
+# red-team activity in LANL is attributed to user accounts.
+include_machine_accounts = false
+# LANL does not publish a timezone; hours are on the dataset clock. Chosen from the label-free global
+# hourly volume of the 15-day LANL subset: hours 0-5 and 19-23 sit on the overnight floor
+# (2.5-2.8M events/h), 6-7 ramp up, 8-16 peak (~5M/h), 17-18 ramp down.
+off_hours = [0, 1, 2, 3, 4, 5, 19, 20, 21, 22, 23]
+baseline_window_days = 7
+# A z-score is only emitted once a user has at least this many prior days in the window.
+min_baseline_days = 3
+# Peer groups are assigned ONCE from the first `warmup_days` days and frozen, so assignment
+# never sees evaluation-period behaviour.
+warmup_days = 3
+min_peer_group_size = 5
+# Hosts used by more than this fraction of warm-up users are infrastructure (DCs, file servers).
+max_host_user_frac = 0.2
+
+[evaluation]
+# Time split. Unsupervised models fit on active user-days with day < train_end_day (labels never
+# read); every model is scored on day >= train_end_day. On LANL, 116 of 129 malicious user-days fall
+# in days 8-14 (see README), so this keeps nearly all attacks out of fitting.
+train_end_day = 8
+recall_targets = [0.5, 0.8, 0.9]
+daily_budgets = [5, 10, 25, 50]
+# Cluster bootstrap over entities (an attacker's user-days are not independent).
+n_bootstrap = 300
+# holdout: score days 15-29 only; supervised reference trained on labelled days < 15.
+test_start_day = 15
+test_end_day = 30
+supervised_mode = "train_before_test"
+
+[models.rules]
+# Sigma-style rules on the user-day table; score = number of rules that fire. Thresholds are set
+# from domain knowledge before looking at labels and are NOT tuned on them.
+min_new_dst_hosts = 3       # first-seen remote destinations in one day (lateral spread)
+min_failures = 5            # failed logons in one day (guessing / spraying)
+ntlm_when_baseline_zero = true   # NTLM by a user whose 7-day baseline has no NTLM (pass-the-hash)
+min_off_hours = 1           # off-hours events by a user whose 7-day baseline has none
+# v2 only, TEST-INFORMED (see README): NTLM events from a source host new to the user.
+min_new_src_ntlm = 1
+
+[models]
+# v1 = first-pass features; v2 = + pre-registered event-level novelty counts (README "Novelty features").
+feature_set = "v2"
+
+[models.iforest]
+n_estimators = 300
+max_samples = 4096
+
+[models.autoencoder]
+hidden = [32, 8]
+epochs = 30
+batch_size = 512
+lr = 1e-3
+weight_decay = 1e-5
+
+[models.supervised]
+# Ceiling only, never a deliverable: trained WITH labels, leave-one-day-out over all days.
+max_iter = 300
+learning_rate = 0.05

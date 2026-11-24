@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+data/raw/
+data/interim/
+data/*.duckdb
+data/*.duckdb.wal
+reports/figures/
+.ipynb_checkpoints/
+data/*.log
+data/*.duckdb.tmp
+# holdout triage cache is still being written; added once the run finishes
+reports/triage/evidence_lanl30_v2__*.jsonl

@@ -1,0 +1,61 @@
+{
+  "packs": "reports/evidence_lanl_v2.jsonl",
+  "backend": "ollama",
+  "model": "qwen2.5:7b",
+  "prompt_version": "v2",
+  "settings": {
+    "temperature": 0,
+    "seed": 42,
+    "num_ctx": 4096
+  },
+  "median_seconds_per_alert": 30.26,
+  "cost_usd_if_batch": 0.0,
+  "cost_usd_if_sync": 0.0,
+  "faithfulness": {
+    "alerts": 350,
+    "parsed": 350,
+    "status_counts": {
+      "ok": 350
+    },
+    "alerts_fully_faithful": 0.0,
+    "claims": 1379,
+    "claim_key_exists": 0.9920232052211748,
+    "claim_value_ok": 0.2001450326323423,
+    "claim_value_wrong_but_cosmetic_only": 0.24583031182015955,
+    "relation_claims": 1323,
+    "relation_comparable": 0.2509448223733938,
+    "relation_ok": 0.23053665910808768,
+    "risk_median": 87,
+    "verdicts": {
+      "escalate": 188,
+      "investigate": 162,
+      "dismiss": 0
+    },
+    "alerts_with_ungrounded_numbers": 0.008571428571428572
+  },
+  "triage": {
+    "positives_in_window": 116,
+    "positives_in_queue": 29,
+    "recall_detector_order": {
+      "5": 0.04310344827586207,
+      "10": 0.07758620689655173,
+      "25": 0.14655172413793102
+    },
+    "recall_after_triage": {
+      "5": 0.02586206896551724,
+      "10": 0.0603448275862069,
+      "25": 0.10344827586206896
+    },
+    "verdicts_true_alerts": {
+      "escalate": 19,
+      "investigate": 10,
+      "dismiss": 0
+    },
+    "verdicts_false_alerts": {
+      "escalate": 169,
+      "investigate": 152,
+      "dismiss": 0
+    },
+    "share_dismissed": 0.0
+  }
+}

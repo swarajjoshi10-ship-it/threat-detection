@@ -1,0 +1,52 @@
+{
+  "source": "lanl",
+  "feature_set": "v2",
+  "test_days": "8-14",
+  "alerts_per_day": 50,
+  "n_alerts": 350,
+  "max_additivity_error": 9.992007221626409e-16,
+  "refit_matches_stored_scores": true,
+  "deletion_check": {
+    "1": {
+      "mean_drop_top": 0.02087413394693567,
+      "mean_drop_random": 0.002539063505021163,
+      "frac_top_beats_random": 0.9942857142857143
+    },
+    "3": {
+      "mean_drop_top": 0.05357190287518226,
+      "mean_drop_random": 0.008112011102513897,
+      "frac_top_beats_random": 1.0
+    },
+    "5": {
+      "mean_drop_top": 0.07988873280060928,
+      "mean_drop_random": 0.014499257198633642,
+      "frac_top_beats_random": 1.0
+    }
+  },
+  "label_summary": {
+    "false_alerts": {
+      "n": 321,
+      "gate_pass_rate": 1.0,
+      "top1_factor_counts": {
+        "log1p_n_new_src_ntlm": 150,
+        "new_dst_ratio": 36,
+        "fail_ratio": 35,
+        "log1p_n_new_src_remote": 32,
+        "off_hours_ratio": 26,
+        "log1p_n_fail": 5
+      }
+    },
+    "true_alerts": {
+      "n": 29,
+      "gate_pass_rate": 1.0,
+      "top1_factor_counts": {
+        "log1p_n_new_src_ntlm": 23,
+        "slog_n_ntlm_peer_z": 2,
+        "log1p_n_new_pair_events": 1,
+        "slog_n_new_dst_hosts_peer_z": 1,
+        "log1p_n_fail": 1,
+        "slog_n_dst_hosts_peer_z": 1
+      }
+    }
+  }
+}

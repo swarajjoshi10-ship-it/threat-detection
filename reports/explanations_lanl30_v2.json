@@ -1,0 +1,40 @@
+{
+  "source": "lanl30",
+  "feature_set": "v2",
+  "test_days": "15-29",
+  "alerts_per_day": 50,
+  "n_alerts": 750,
+  "max_additivity_error": 1.2212453270876722e-15,
+  "refit_matches_stored_scores": true,
+  "deletion_check": {
+    "1": {
+      "mean_drop_top": 0.02160144352173563,
+      "mean_drop_random": 0.0026631766847140803,
+      "frac_top_beats_random": 1.0
+    },
+    "3": {
+      "mean_drop_top": 0.05610086625140362,
+      "mean_drop_random": 0.00853530219897477,
+      "frac_top_beats_random": 1.0
+    },
+    "5": {
+      "mean_drop_top": 0.08229716600591344,
+      "mean_drop_random": 0.015100327169643511,
+      "frac_top_beats_random": 1.0
+    }
+  },
+  "label_summary": {
+    "false_alerts": {
+      "n": 750,
+      "gate_pass_rate": 1.0,
+      "top1_factor_counts": {
+        "log1p_n_new_src_ntlm": 321,
+        "fail_ratio": 96,
+        "new_dst_ratio": 82,
+        "log1p_n_new_src_remote": 68,
+        "off_hours_ratio": 42,
+        "slog_n_dst_hosts_peer_z": 27
+      }
+    }
+  }
+}

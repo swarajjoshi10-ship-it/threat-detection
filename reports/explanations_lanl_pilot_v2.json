@@ -1,0 +1,47 @@
+{
+  "source": "lanl_pilot",
+  "feature_set": "v2",
+  "test_days": "1-7",
+  "alerts_per_day": 50,
+  "n_alerts": 350,
+  "max_additivity_error": 1.5543122344752192e-15,
+  "refit_matches_stored_scores": false,
+  "deletion_check": {
+    "1": {
+      "mean_drop_top": 0.02267863719124356,
+      "mean_drop_random": 0.002203317983652015,
+      "frac_top_beats_random": 0.9942857142857143
+    },
+    "3": {
+      "mean_drop_top": 0.05610566127377155,
+      "mean_drop_random": 0.00760165063431109,
+      "frac_top_beats_random": 1.0
+    },
+    "5": {
+      "mean_drop_top": 0.08241750401930549,
+      "mean_drop_random": 0.01380343645343284,
+      "frac_top_beats_random": 1.0
+    }
+  },
+  "label_summary": {
+    "false_alerts": {
+      "n": 346,
+      "gate_pass_rate": 1.0,
+      "top1_factor_counts": {
+        "log1p_n_new_src_ntlm": 167,
+        "new_dst_ratio": 63,
+        "fail_ratio": 48,
+        "log1p_n_new_src_remote": 30,
+        "off_hours_ratio": 11,
+        "log1p_n_fail": 7
+      }
+    },
+    "true_alerts": {
+      "n": 4,
+      "gate_pass_rate": 1.0,
+      "top1_factor_counts": {
+        "log1p_n_new_src_ntlm": 4
+      }
+    }
+  }
+}

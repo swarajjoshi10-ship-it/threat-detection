@@ -1,0 +1,25 @@
+{
+  "frozen_unix": 1795443115,
+  "note": "LANL days 15-29 holdout: v2 features, two_stage + all detectors, fit on days 0-7; frozen before days 15-29 auth data was downloaded",
+  "files": {
+    "config/default.toml": "ad1bf9bf85812acc3cdba54af5637154df3bd9dc078374ad46c29de5803ad51a",
+    "config/holdout_lanl30.toml": "4381b36d00dedfa89046d7f0a4cc10ab594db374a09efc801863301d311086b0",
+    "sql/01_ingest_auth.sql": "5c06ca16faf390671c4ce7ef8040d93e3deb187c88b96652082bb098d8976596",
+    "sql/02_ingest_labels.sql": "6df86862a663e5ded585592df59f34ce40442a6f1bf8ca5fb23cf4cdf93548ed",
+    "sql/10_user_day_base.sql": "cbae2e3ea8500042bc74a5eb12b0d85551520476e9b68cc2e275da1701ce15a3",
+    "sql/11_user_day_baseline.sql": "5167c43e4a31f7e4f45cb6d65a7e7b8e89966f062ffb06e1c071b6959f760a75",
+    "sql/12_peer_groups.sql": "88392f375bac6fe5e455522323807a5e4eb70a3ed58fb9ba55bb6422eb7c93ad",
+    "src/threatdet/__init__.py": "b300047e5406106ac800b3cbbd2894bff16dfd9f8110cdb7a97dffc9ed6a1b01",
+    "src/threatdet/config.py": "b7bc453051b5000b4a23d6fc2bb7d85231810333e25fb07812af034f4be938ad",
+    "src/threatdet/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/threatdet/data/download_lanl.py": "7a9fb19a81a7b0f49988ef96053a66f6262fda9574414129ad02fe97ddcff7f7",
+    "src/threatdet/data/synthetic.py": "117824c1ce4efc538d1603b5dc0d08f5942868f817495e530bc5586f3b98b694",
+    "src/threatdet/evaluate.py": "f19650e3bb5966ea5896db3dd164faeb8b412876c7a2d7f9870c75b63925fc95",
+    "src/threatdet/freeze.py": "87ebf6ea3150d03b0d5c2fb235e7bc7793346ad4a7b556b1b662f713edc79d43",
+    "src/threatdet/metrics.py": "e70446a896d06df9ac53e979a32e65ee0e3e42ce2d208bc6b70bf481706d5874",
+    "src/threatdet/models/__init__.py": "603ca22d456b528a3b6cab0ac29d10ae4cc0d0cf2c4adf69289c6e360207cd65",
+    "src/threatdet/models/detectors.py": "949ffc3989962f1aaa507187aa3ab1aabb93b6e9edbd2ce1c94d1762f79cf36d",
+    "src/threatdet/pipeline.py": "b630a263ee6dccc3a4e81c89ed26c2849f38e8e48726683363cc9e034e879f41",
+    "src/threatdet/sqlrun.py": "91957b215381192b74b24d160f88c7252b556c1be255dd4b36fb437d11589761"
+  }
+}
