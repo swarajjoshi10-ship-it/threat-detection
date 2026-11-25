@@ -1,0 +1,44 @@
+{
+  "params": {
+    "w": 14,
+    "min_new": 3,
+    "watch_days": 0,
+    "budget": 1.0,
+    "threshold": 8.0
+  },
+  "post_hoc": true,
+  "windows": {
+    "days 8-14": {
+      "days": 7,
+      "triggers_per_day": 29.714285714285715,
+      "host_alerts_per_day": 29.714285714285715,
+      "user_alerts_per_day": 64.14285714285714,
+      "attacker_host_days": 9,
+      "attacker_host_days_caught": 6,
+      "attacker_hosts": 3,
+      "attacker_hosts_caught": 2,
+      "malicious_user_days": 116,
+      "malicious_user_days_caught": 114,
+      "user_recall": 0.9827586206896551,
+      "accounts": 86,
+      "accounts_caught": 85,
+      "user_precision": 0.25389755011135856
+    },
+    "days 15-29": {
+      "days": 15,
+      "triggers_per_day": 19.133333333333333,
+      "host_alerts_per_day": 19.133333333333333,
+      "user_alerts_per_day": 25.6,
+      "attacker_host_days": 12,
+      "attacker_host_days_caught": 1,
+      "attacker_hosts": 2,
+      "attacker_hosts_caught": 1,
+      "malicious_user_days": 47,
+      "malicious_user_days_caught": 12,
+      "user_recall": 0.2553191489361702,
+      "accounts": 37,
+      "accounts_caught": 12,
+      "user_precision": 0.03125
+    }
+  }
+}

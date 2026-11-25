@@ -5,6 +5,48 @@ behaviour** (and their peers'), then rank user-days for an analyst. The question
 is operational: *at a fixed recall, how many alerts per day does an analyst have to look at, and does
 a model beat a simple rule at that?*
 
+## At a glance
+
+**Data:** the LANL authentication logs: 30 days of user logons, 47 to 116 malicious user-days per
+evaluation window, from a red-team exercise. Models train on days 0–7 without labels; days 8–14 are for
+validation; days 15–29 were a frozen holdout.
+
+**What I built:**
+- DuckDB feature pipeline: per-user baselines, peer groups, novelty and host fan-out;
+- seven detectors, plus a labelled model as an upper-bound reference;
+- leakage tests;
+- SHAP evidence packs and LLM triage with a mechanical faithfulness check;
+- a detection rule with an analyst runbook ([detections/](detections/RUNBOOK.md)).
+
+**What happened** (each step was pre-registered before it was scored):
+
+| Step | Days 8–14 | Days 15–29 | Verdict |
+|---|---|---|---|
+| Best v2 detector (two-stage novelty gate) | 25% caught at 50 alerts/day | **0%** | fails the frozen holdout |
+| v3 host fan-out (14-day window) | 82.8% | **8.5%** | fails; baseline poisoning |
+| Fan-out rule + watch list (designed after seeing days 15–29) | 98% at 64 user alerts/day | 87% at 86 user alerts/day | promising, post-hoc only |
+| LLM triage (local 7B model), best version | 27.1% of alerts fully faithful | – | fails the 90% target |
+
+![Recall at 50 alerts per day, days 8–14 vs 15–29](docs/figures/recall_by_detector.png)
+
+**Why the holdout failed.** The validation attacks were first contacts: a user logging on from a host
+for the first time. Most holdout attacks were repeat visits from the same foothold, and novelty
+features stop seeing those after the first visit. A host-level view fixes the first part. But with a
+14-day memory, the main attacker host's 100+ victims become "established" and its score fades to
+almost zero. Freezing a host's baseline once it has fired keeps it visible:
+
+![Fan-out of attacker host C17693 over time](docs/figures/attacker_host_fanout.png)
+
+**LLM triage.** A 7B model can't reliably copy numbers or choose verdicts. After a redesign where code
+fills every value and the detector keeps the verdict, it still pairs facts with the wrong baselines.
+The mechanical checker catches every such error, which is the part worth keeping:
+
+![LLM triage faithfulness by version](docs/figures/triage_faithfulness.png)
+
+**What's left:** the watch-list rule needs a test on fresh labelled data, because LANL has none after
+day 29 (DARPA OpTC is the candidate). An LLM version where code also attaches the baseline can be
+tested without labels, on later LANL days.
+
 > Status: **ingestion, features (v1 + pre-registered v2 novelty), seven detectors and the evaluation
 > harness done and tested.** LANL results are in [Results](#results-first-pass-lanl-days-814) and
 > [v2 results](#v2-results-lanl-days-814) and the [two-stage gate](#two-stage-gate--ranker-pre-registration):
@@ -842,6 +884,48 @@ What does hold: code-filled values are correct by construction, and the verdict 
 model. The LLM's prose is still not trustworthy without the mechanical check, which is what the check
 is for. Reports: `reports/triage/eval_evidence_lanl_v2__qwen2.5-7b__n2.json` and the pilot's.
 
+## Detection rule: host fan-out with a watch list (post-hoc)
+
+[detections/host_fanout_rule.sql](detections/host_fanout_rule.sql) turns the v3 signal into a
+scheduled rule, with an analyst [runbook](detections/RUNBOOK.md); tests are in
+[tests/test_detection_rule.py](tests/test_detection_rule.py).
+
+**Status: post-hoc.** The watch list exists because of the days 15–29 diagnosis, so none of these
+numbers is a holdout result.
+
+**How it works:**
+1. **Trigger:** a host fires when its 14-day fan-out is at least the threshold and it has at least 3
+   recent-new users.
+2. **Watch:** for `watch_days` after its latest trigger, the host's baseline stays frozen at its first
+   trigger.
+3. **User alert:** any user who first reached the host since then (minus W) raises an alert whenever
+   they log on remotely from it.
+
+**The threshold is chosen without labels:** it is the smallest fan-out with at most 1 trigger a day
+on days 1–7, which gives 8.0. Labels are read only after the rule tables are built. `python -m
+detections.rule` writes `reports/detection_rule.{json,md}`.
+
+| watch_days | Window | Host alerts/day | User alerts/day | Attacker host-days caught | Malicious user-days caught | Accounts caught | User-alert precision |
+|---|---|---|---|---|---|---|---|
+| **30** | days 8–14 | 29.9 | 64.1 | 6/9 | 114/116 (98.3%) | 85/86 | 25.4% |
+| **30** | days 15–29 | 68.9 | 85.5 | 6/12 | 41/47 (87.2%) | 36/37 | 3.2% |
+| 14 | days 15–29 | 66.6 | 82.4 | 6/12 | 41/47 (87.2%) | 36/37 | 3.3% |
+| 7 | days 15–29 | 45.3 | 55.9 | 2/12 | 14/47 (29.8%) | 14/37 | 1.7% |
+| 0 (trigger days only) | days 15–29 | 19.1 | 25.6 | 1/12 | 12/47 (25.5%) | 12/37 | 3.1% |
+
+**Reading it honestly:**
+- **The watch list is what recovers the holdout attacks.** Without it (watch 0) the rule catches
+  25.5%; with a watch of 14 days or more it catches 87.2%. C17693 last fires on day 15, so any watch of
+  14 days or more covers the rest of the data.
+- **It costs volume, and the cost grows.** Host alerts rise from about 30 to about 69 a day as
+  triggered hosts pile up on the watch list. Precision on days 15–29 is 3%. The rule is meant to be
+  triaged **per host** (69 a day, each explaining dozens of user alerts), not per user.
+- **The threshold drifts.** It fired about 1 time a day on its training days and 19–30 times a day
+  later, so it needs recalibrating (see the runbook).
+- **This is still mostly one attacker host.** With a 28-day window instead of a watch list, the
+  frozen-baseline score and the plain score match until day 28 (see the figure above). That's the
+  same finding seen two ways, not an independent confirmation.
+
 ## Assumptions & limitations (so far)
 
 * **Timezone:** LANL publishes no timezone; hours are on the dataset clock. `off_hours` was chosen from the
@@ -867,7 +951,10 @@ sql/          ingestion + feature SQL (DuckDB)
 src/threatdet/  config, sqlrun, pipeline, metrics, evaluate, freeze, models/detectors, data/{download_lanl, synthetic}
 triage/       explain (SHAP evidence packs), llm (v2 triage + faithfulness check), narrate (v3: LLM narrates, code fills values); outside the frozen tree
 hostrisk/     v3 host fan-out + recency features and evaluation (post-hoc); outside the frozen tree
-tests/        pytest suite (104 tests, offline, ~1 min)
+detections/   host fan-out rule with watch list (SQL), runner + scoring, analyst RUNBOOK.md; outside the frozen tree
+docs/         make_figures.py and the README figures
+.github/      CI: freeze check + test suite on every push
+tests/        pytest suite (109 tests, offline, ~1 min)
 notebooks/    exploration (to come)
 reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations_*.{json,md}; figures + recommendations write-up (to come)
 ```
@@ -876,8 +963,8 @@ reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations
 
 1. ~~Ingest~~ · 2. ~~Features~~ · 3. ~~Models~~ (rules, z-score max, Isolation Forest, autoencoder,
    supervised ceiling; scikit-learn gradient boosting stands in for XGBoost to avoid a dependency) ·
-   4. ~~Time split, PR-AUC, recall@k, alerts/day, bootstrap CIs~~; ~~event-level novelty (v2)~~; ~~two-stage gate~~; ~~frozen holdout days 15–29~~ (failed; see Holdout result); ~~revisit detection + host-level fan-out (v3, post-hoc)~~; alert memory for flagged hosts (needs new labelled data);
-   per-day/per-source breakdown, PR and alerts-vs-recall figures · 5. ~~SHAP for top
+   4. ~~Time split, PR-AUC, recall@k, alerts/day, bootstrap CIs~~; ~~event-level novelty (v2)~~; ~~two-stage gate~~; ~~frozen holdout days 15–29~~ (failed; see Holdout result); ~~revisit detection + host-level fan-out (v3, post-hoc)~~; ~~alert memory for flagged hosts~~ (watch-list rule, post-hoc; needs new labelled data to validate);
+   ~~summary figures~~ · ~~detection rule + runbook~~ · fresh-data test (DARPA OpTC) · 5. ~~SHAP for top
    alerts~~ · 6. ~~LLM triage with faithfulness evaluation~~ (run on 1,100 alerts; failed all criteria) · 7. 2-page recommendations.
 
 ## AI assistance
