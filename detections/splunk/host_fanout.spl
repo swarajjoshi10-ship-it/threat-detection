@@ -1,0 +1,90 @@
+``` ======================================================================================
+ Host fan-out with watch list: Splunk port of detections/host_fanout_rule.sql
+ Runbook: detections/RUNBOOK.md
+
+ Status: hand-translated and reviewed against the SQL. It has NOT been run in Splunk; the SQL
+ version is the one tested and scored on LANL. Unlike the Sigma rule, it keeps history in
+ lookups, so it can tell new accounts from a host's usual crowd.
+
+ Fields (Windows Security 4624, XML-rendered):
+   TargetUserName -> user      WorkstationName -> src      Computer (short name) -> dest
+   LogonType 3 = network logon. Machine accounts (*$) and ANONYMOUS LOGON are excluded.
+ Days are floor(epoch / 86400): run these searches with the search timezone set to UTC.
+
+ Lookups (CSV):
+   fanout_pairs.csv     user, src, first_day       first day each user was seen from each host
+                                                   (src "" = logons with no source host)
+   fanout_triggers.csv  day, src, n_recent_new_users, n_established_users, fanout, n_remote
+   fanout_suppress.csv  src, owner, expires        reviewed benign hosts; expires = epoch time
+
+ Parameters: W = 14 days, threshold = 8 (recalibrate monthly, see runbook), min_new = 3,
+ watch_days = 30.
+
+ Run the three searches in this order, once a day, each over yesterday (earliest=-1d@d latest=@d).
+ Seed fanout_pairs.csv once by running search 1 over the available history first.
+====================================================================================== ```
+
+
+``` ---- Search 1: fanout_01_first_seen   (cron 5 0 * * *) -------------------------------
+ Adds yesterday's user-host pairs to the first-seen lookup. All logon types count, as in the SQL. ```
+index=wineventlog EventCode=4624 TargetUserName!="*$" TargetUserName!="ANONYMOUS LOGON"
+| eval user=lower(TargetUserName), src=if(isnull(WorkstationName) OR WorkstationName="-", "", lower(WorkstationName)),
+       day=floor(_time / 86400)
+| stats min(day) as first_day by user src
+| append [| inputlookup fanout_pairs.csv]
+| stats min(first_day) as first_day by user src
+| outputlookup fanout_pairs.csv
+
+
+``` ---- Search 2: fanout_02_triggers   (cron 15 0 * * *) -------------------------------
+ A host fires when its users are mostly recently new: fanout = recent-new / (1 + established).
+ "Recently new" = the user first came from this host in the last 14 days, and that was not the
+ user's own first day (a brand-new account is cold start, not novelty). ```
+| inputlookup fanout_pairs.csv
+| eventstats min(first_day) as user_first_day by user
+| where src!=""
+| eval today=floor(relative_time(now(), "-1d@d") / 86400)
+| where first_day<=today
+| eval recent_new=if(first_day>user_first_day AND first_day>today-14, 1, 0)
+| stats sum(recent_new) as n_recent_new_users, count as n_users, max(today) as day by src
+| eval n_established_users=n_users-n_recent_new_users,
+       fanout=n_recent_new_users / (1 + n_established_users)
+| where fanout>=8 AND n_recent_new_users>=3
+| join type=inner src
+    [ search index=wineventlog EventCode=4624 LogonType=3 earliest=-1d@d latest=@d
+      | eval src=lower(WorkstationName), dest=lower(mvindex(split(Computer, "."), 0))
+      | where src!=dest AND src!="-" AND isnotnull(src)
+      | stats count as n_remote by src ]
+| lookup fanout_suppress.csv src OUTPUT expires
+| where isnull(expires) OR expires<now()
+| table day src n_recent_new_users n_established_users fanout n_remote
+| outputlookup append=true fanout_triggers.csv
+
+
+``` ---- Search 3: fanout_03_watch_alerts   (cron 25 0 * * *; this one alerts) -----------
+ A host stays watched for 30 days after its latest trigger. Its baseline is frozen at its FIRST
+ trigger: users who first came from it since (first trigger - 14 days) stay suspect for the whole
+ watch, instead of ageing into "established". One alert per watched host, listing the suspect
+ users seen from it yesterday; analysts triage per host. ```
+| inputlookup fanout_triggers.csv
+| eval today=floor(relative_time(now(), "-1d@d") / 86400)
+| stats min(day) as first_trigger, max(day) as last_trigger, max(today) as today by src
+| where last_trigger>=today-30
+| lookup fanout_suppress.csv src OUTPUT expires
+| where isnull(expires) OR expires<now()
+| join type=inner max=0 src
+    [ search index=wineventlog EventCode=4624 LogonType=3 TargetUserName!="*$" TargetUserName!="ANONYMOUS LOGON"
+        earliest=-1d@d latest=@d
+      | eval src=lower(WorkstationName), dest=lower(mvindex(split(Computer, "."), 0)), user=lower(TargetUserName)
+      | where src!=dest AND src!="-" AND isnotnull(src)
+      | stats count as n_remote by src user ]
+| lookup fanout_pairs.csv user src OUTPUT first_day as pair_first_day
+| join type=left user
+    [| inputlookup fanout_pairs.csv | stats min(first_day) as user_first_day by user ]
+| where pair_first_day>user_first_day AND pair_first_day>first_trigger-14
+| stats dc(user) as n_suspect_users, values(user) as suspect_users, sum(n_remote) as n_remote_logons,
+        min(first_trigger) as first_trigger, max(last_trigger) as last_trigger, max(today) as today by src
+| eval is_trigger_day=if(last_trigger=today, "yes", "no"),
+       days_watched=today-first_trigger,
+       severity=if(is_trigger_day="yes", "high", "medium")
+| sort - n_suspect_users

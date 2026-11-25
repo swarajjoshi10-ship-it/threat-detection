@@ -58,6 +58,42 @@ drifts.
 with no change ticket. Escalate immediately if they are NTLM, or if any suspect account is
 privileged.
 
+## Deploying in a SIEM
+
+| Version | File | State | Catches the LANL attacker? |
+|---|---|---|---|
+| **SQL (reference)** | [host_fanout_rule.sql](host_fanout_rule.sql) | tested, scored post-hoc | yes: 41 of 47 malicious user-days on days 15–29 |
+| **Splunk, stateful** | [splunk/host_fanout.spl](splunk/host_fanout.spl) | hand-translated; not yet run in Splunk | same logic as the SQL |
+| **Sigma, stateless** | [sigma/host_many_accounts.yml](sigma/host_many_accounts.yml) | validated and converted with pySigma ([generated SPL](sigma/host_many_accounts.generated.spl)) | no: 0 of 21 attacker host-days at its label-free threshold |
+
+**Splunk:** three scheduled searches, run daily in order:
+1. update a first-seen lookup of user-host pairs;
+2. compute fan-out and append triggers;
+3. alert once per watched host, listing yesterday's suspect users.
+
+A suppression lookup (`fanout_suppress.csv`: src, owner, expires) holds reviewed benign hosts. It
+removes them from triggers and the watch list until the expiry date.
+
+**Sigma:** a correlation rule (`value_count`) of distinct accounts per source host per day. Sigma
+correlations keep no history, so this version can't see "new". On LANL it fires on busy servers and
+misses the attacker hosts. Lowering the threshold to 15 catches 3 of 12 attacker host-days on
+days 15–29, at 15 alerts a day ([report](../reports/detection_count_rule.md)). Use it as a portable
+fallback where lookups or state aren't available.
+
+**Field mapping:**
+
+| LANL | Windows 4624 |
+|---|---|
+| `src_user` | `TargetUserName` |
+| `src_comp` | `WorkstationName` |
+| `dst_comp` | `Computer`, short name |
+| Network logon | `LogonType` 3 |
+
+**Before relying on it, check:**
+- `WorkstationName` is often empty or "-" for some logon paths; `IpAddress` plus a DHCP or asset
+  lookup may be needed instead.
+- Days are counted in UTC.
+
 ## Known limits
 
 - **Noise:** in the post-hoc test, about 3% of user alerts on days 15–29 were malicious, at

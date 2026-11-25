@@ -1,0 +1,62 @@
+{
+  "rule": "distinct accounts per source host per day (remote logons)",
+  "post_hoc": true,
+  "rows": [
+    {
+      "threshold": 86,
+      "label_free": true,
+      "days 8-14": {
+        "host_alerts_per_day": 0.42857142857142855,
+        "attacker_host_days": 9,
+        "attacker_host_days_caught": 0
+      },
+      "days 15-29": {
+        "host_alerts_per_day": 0.8,
+        "attacker_host_days": 12,
+        "attacker_host_days_caught": 0
+      }
+    },
+    {
+      "threshold": 50,
+      "label_free": false,
+      "days 8-14": {
+        "host_alerts_per_day": 5.571428571428571,
+        "attacker_host_days": 9,
+        "attacker_host_days_caught": 2
+      },
+      "days 15-29": {
+        "host_alerts_per_day": 5.466666666666667,
+        "attacker_host_days": 12,
+        "attacker_host_days_caught": 0
+      }
+    },
+    {
+      "threshold": 25,
+      "label_free": false,
+      "days 8-14": {
+        "host_alerts_per_day": 10.857142857142858,
+        "attacker_host_days": 9,
+        "attacker_host_days_caught": 3
+      },
+      "days 15-29": {
+        "host_alerts_per_day": 10.0,
+        "attacker_host_days": 12,
+        "attacker_host_days_caught": 1
+      }
+    },
+    {
+      "threshold": 15,
+      "label_free": false,
+      "days 8-14": {
+        "host_alerts_per_day": 17.857142857142858,
+        "attacker_host_days": 9,
+        "attacker_host_days_caught": 4
+      },
+      "days 15-29": {
+        "host_alerts_per_day": 15.133333333333333,
+        "attacker_host_days": 12,
+        "attacker_host_days_caught": 3
+      }
+    }
+  ]
+}

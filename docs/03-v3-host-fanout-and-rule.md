@@ -146,3 +146,29 @@ detections.rule` writes `reports/detection_rule.{json,md}`.
 - **This is still mostly one attacker host.** With a 28-day window instead of a watch list, the
   frozen-baseline score and the plain score match until day 28 (see the [figure in the README](../README.md#at-a-glance)). That's the
   same finding seen two ways, not an independent confirmation.
+
+### SIEM ports: Splunk (stateful) and Sigma (stateless)
+
+The rule also exists as Splunk saved searches
+([detections/splunk/host_fanout.spl](../detections/splunk/host_fanout.spl)) and as a Sigma
+correlation rule ([detections/sigma/host_many_accounts.yml](../detections/sigma/host_many_accounts.yml)).
+[tests/test_siem_ports.py](../tests/test_siem_ports.py) checks that both use the SQL rule's
+parameters.
+
+- **Splunk** keeps history in lookups and carries the full logic: first-seen pairs, fan-out, the
+  frozen-baseline watch list, and a suppression list. It is a hand translation and has not been run
+  in Splunk.
+- **Sigma** correlations keep no history, so the Sigma rule can only count distinct accounts per
+  source host per day. pySigma 2.1.2 validates it and converts it to SPL. Scored the same way on LANL
+  (`python -m detections.count_rule`, post-hoc), it shows what dropping the baseline costs:
+
+| Distinct-account threshold | Days 8–14 host alerts/day | Attacker host-days caught | Days 15–29 host alerts/day | Attacker host-days caught |
+|---|---|---|---|---|
+| 86 (label-free, as shipped) | 0.4 | 0/9 | 0.8 | 0/12 |
+| 50 | 5.6 | 2/9 | 5.5 | 0/12 |
+| 25 | 10.9 | 3/9 | 10.0 | 1/12 |
+| 15 | 17.9 | 4/9 | 15.1 | 3/12 |
+
+The busiest source hosts are servers whose crowd is normal, so a plain count fires on them and not on
+the attacker. Per host, the watch-list rule catches 6/9 and 6/12 attacker host-days, at 30 and 69
+host alerts a day. Its larger advantage is per user: 41 of 47 malicious user-days on days 15–29.

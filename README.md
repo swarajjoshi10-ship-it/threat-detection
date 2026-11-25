@@ -16,7 +16,8 @@ validation; days 15–29 were a frozen holdout.
 - seven detectors, plus a labelled model as an upper-bound reference;
 - leakage tests;
 - SHAP evidence packs and LLM triage with a mechanical faithfulness check;
-- a detection rule with an analyst runbook ([detections/](detections/RUNBOOK.md)).
+- a detection rule with an analyst runbook ([detections/](detections/RUNBOOK.md)), ported to Splunk
+  saved searches and a Sigma correlation rule (validated with pySigma).
 
 **What happened** (each step was pre-registered before it was scored):
 
@@ -150,10 +151,10 @@ sql/          ingestion + feature SQL (DuckDB)
 src/threatdet/  config, sqlrun, pipeline, metrics, evaluate, freeze, models/detectors, data/{download_lanl, synthetic}
 triage/       explain (SHAP evidence packs), llm (v2 triage + faithfulness check), narrate (v3: LLM narrates, code fills values); outside the frozen tree
 hostrisk/     v3 host fan-out + recency features and evaluation (post-hoc); outside the frozen tree
-detections/   host fan-out rule with watch list (SQL), runner + scoring, analyst RUNBOOK.md; outside the frozen tree
+detections/   host fan-out rule (SQL, Splunk SPL, Sigma), scoring, analyst RUNBOOK.md; outside the frozen tree
 docs/         the full write-ups (00-04), make_figures.py and the README figures
 .github/      CI: freeze check + test suite on every push
-tests/        pytest suite (109 tests, offline, ~1 min)
+tests/        pytest suite (112 tests, offline, ~1 min)
 notebooks/    exploration (to come)
 reports/      metrics_<source>_<v1|v2>.{json,md}, evidence_*.jsonl, explanations_*.{json,md}; figures + recommendations write-up (to come)
 ```

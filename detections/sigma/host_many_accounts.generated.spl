@@ -1,0 +1,7 @@
+``` Generated from detections/sigma/host_many_accounts.yml by pySigma 2.1.2 + pysigma-backend-splunk 3.0.1. Do not edit; regenerate. ```
+EventID=4624 LogonType=3 NOT (TargetUserName IN ("*$", "ANONYMOUS LOGON"))
+
+| bin _time span=1d
+| stats dc(TargetUserName) as value_count by _time WorkstationName
+
+| search value_count >= 86
